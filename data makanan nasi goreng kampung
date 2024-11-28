@@ -1,0 +1,62 @@
+from flask import Flask, jsonify, request
+
+app = Flask(__name__)
+
+# Data awal
+menu = [
+    {
+        "id": 1,
+        "nama": "Nasi Goreng Kampung",
+        "harga": 15000,
+        "deskripsi": "Nasi goreng khas kampung dengan sambal terasi dan kerupuk."
+    },
+    {
+        "id": 2,
+        "nama": "Nasi Goreng Telur",
+        "harga": 12000,
+        "deskripsi": "Nasi goreng sederhana dengan telur dadar."
+    }
+]
+
+# Route untuk mendapatkan semua menu
+@app.route('/menu', methods=['GET'])
+def get_menu():
+    return jsonify(menu)
+
+# Route untuk mendapatkan menu berdasarkan ID
+@app.route('/menu/<int:menu_id>', methods=['GET'])
+def get_menu_by_id(menu_id):
+    item = next((m for m in menu if m["id"] == menu_id), None)
+    if item:
+        return jsonify(item)
+    return jsonify({"message": "Menu tidak ditemukan"}), 404
+
+# Route untuk menambahkan menu baru
+@app.route('/menu', methods=['POST'])
+def add_menu():
+    new_menu = request.json
+    if not all(k in new_menu for k in ("nama", "harga", "deskripsi")):
+        return jsonify({"message": "Data tidak lengkap"}), 400
+    new_menu["id"] = len(menu) + 1
+    menu.append(new_menu)
+    return jsonify({"message": "Menu berhasil ditambahkan", "data": new_menu}), 201
+
+# Route untuk memperbarui menu
+@app.route('/menu/<int:menu_id>', methods=['PUT'])
+def update_menu(menu_id):
+    item = next((m for m in menu if m["id"] == menu_id), None)
+    if item:
+        data = request.json
+        item.update(data)
+        return jsonify({"message": "Menu berhasil diperbarui", "data": item})
+    return jsonify({"message": "Menu tidak ditemukan"}), 404
+
+# Route untuk menghapus menu
+@app.route('/menu/<int:menu_id>', methods=['DELETE'])
+def delete_menu(menu_id):
+    global menu
+    menu = [m for m in menu if m["id"] != menu_id]
+    return jsonify({"message": "Menu berhasil dihapus"})
+
+if __name__ == '__main__':
+    app.run(debug=True)
